@@ -57,7 +57,27 @@ def invkin(xyz):
     #Calculate q4
 	q4 = 0 # We don't consider rotation yet
   
-	print('Leaving:' + str((q1,q2,q3,q4)))
+	print('Found angles for q1-4:' + str((q1,q2,q3,q4)))
+	# TODO: Sæt grænser for q1-4
+	
+	limit_ = 1.5
+	if q1>limit_:
+		q1=limit_
+	elif q1 < -limit_
+		q1 = -limit_
+
+	limit_ = 1.8
+	if q2>limit_:
+		q2=limit_
+	elif q2 < -limit_
+		q2 = -limit_
+
+	limit_ = 1.8
+	if q3>limit_:
+		q3=limit_
+	elif q3 < -limit_
+		q3 = -limit_
+		
 	return [q1,q2,q3,q4]
 	#return [0,0,0,0]
 
