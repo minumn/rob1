@@ -9,48 +9,50 @@ from std_msgs.msg import String
 from geometry_msgs.msg import Vector3
 import rospy
 
-DEBUG = false
+DEBUG = True
+DATAFROMWEBCAM = True
 
 # REF: Inspiration found on https://github.com/au-crustcrawler/au_opencv_example/blob/master/src/opencvexample.py?fbclid=IwAR0FTOImwGA_EJhDEodd2QmzwBPFp0cXghX7iKaL780cvCc5QA8qySCZg30
 
 class RecognizeFlask:
+
 	def __init__(self):
 		self.brickCoordinates = list()
 		
-		imageRaw = getImageRaw()
+		imageRaw = self.getImageRaw(fromWebcam=DATAFROMWEBCAM)
 
-		self.image = image = cutImageMargins(imageRaw)
+		self.image = image = self.cutImageMargins(imageRaw)
 
-		hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+		self.hsv = hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 		
 		if DEBUG:
 			cv2.imshow('raw', imageRaw)
 			cv2.imshow('cropped', image)
 			cv2.imshow('hsv', hsv)
 			
-		initColorMargins()
+		self.initColorMargins()
 		
 		color = "yellow"
-		bricks = findBricks(color show = True)
+		bricks = self.findBricks(color)
 		
 		if DEBUG:
-			showBricks(bricks, color)
+			self.showBricks(bricks, color)
 
 			cv2.imshow('result',image)
 
-			c = cv2.waitKey(5)
-			cv2.destroyAllWindows()
-			exit(0)
+			# c = cv2.waitKey(5)
+			# cv2.destroyAllWindows()
+			# exit(0)
 			
-		cv2.imwrite('result.jpg',image)
+		#cv2.imwrite('result.jpg',image)
 		
-		publishResult()
+		# self.publishResult()
 	
 	def  getImageRaw(self, fromWebcam = True):
 		if fromWebcam:
-			return get_from_webcam()
-		else
-			return get_from_file('test.jpg')
+			return self.get_from_webcam()
+		else:
+			return self.get_from_file('test.jpg')
 	
 	def cutImageMargins(self, image_raw):
 		return image_raw[77:414, 32:630]
@@ -68,37 +70,40 @@ class RecognizeFlask:
 		self.lower_red = np.array([0,50,50])
 		self.upper_red = np.array([20,255,255])
 	
-	def findBricks(color = "yellow"):
+	def findBricks(self, color = "yellow"):
+		color = color.lower()
+		image = self.image
+		hsv = self.hsv
+		
+		if color == "yellow":
+			return self.do_full(image, hsv, self.upper_yellow, self.lower_yellow)
+		elif color == "blue":
+			return self.do_full(image, hsv, self.upper_blue, self.lower_blue)
+		elif color == "green":
+			return self.do_full(image, hsv, self.upper_green, self.lower_green)
+		elif color == "red":
+			return self.do_full(image, hsv, self.upper_red, self.lower_red)
+		else:
+			raise Exception("Color '{}' is not supported".format(color))
+			
+	def showBricks(self, bricks, color = "yellow"):
 		color = color.lower()
 		
 		if color == "yellow":
-			return do_full(image, hsv, upper_yellow, lower_yellow)
+			self.show_bricks(bricks, (0,255,255))
 		elif color == "blue":
-			return do_full(image, hsv, upper_blue, lower_blue)
+			self.show_bricks(bricks, (255,0,0))
 		elif color == "green":
-			return do_full(image, hsv, upper_green, lower_green)
+			self.show_bricks(bricks, (0,255,0))
 		elif color == "red":
-			return do_full(image, hsv, upper_red, lower_red)
+			self.show_bricks(bricks, (0,0,255))
 		else:
-			throw Exception("Color '{}' is not supported".format(color))
-			
-	def showBricks(bricks, color = "yellow"):
-			color = color.lower()
-		
-		if color == "yellow":
-			show_bricks(bricks, (0,255,255))
-		elif color == "blue":
-			show_bricks(bricks, (255,0,0))
-		elif color == "green":
-			show_bricks(bricks, (0,255,0))
-		elif color == "red":
-			show_bricks(bricks, (0,0,255))
-		else:
-			throw Exception("Color '{}' is not supported".format(color))
+			raise Exception("Color '{}' is not supported".format(color))
 	
 	def show_bricks(self, bricks, color):
-		for b in bricks:
-			cv2.drawContours(self.image, [b], 0, color, 2)
+		if bricks != None:
+			for b in bricks:
+				cv2.drawContours(self.image, [b], 0, color, 2)
 	
 	def get_from_webcam(self):
 		"""
@@ -124,7 +129,10 @@ class RecognizeFlask:
 		Loads image from file
 		"""
 		print "loading from file..."
-		return cv2.imread(filename)
+		file = cv2.imread(filename)
+		if file == None:
+			raise Exception("File not loaded correctly.")
+		return file
 
 	def get_bricks(self, contours):
 		"""
@@ -201,9 +209,9 @@ class RecognizeFlask:
 
 		set DEBUG to True in order to show the intermediate images
 		"""
-		single_color_img = extract_single_color_range(image, hsv, lower, upper)
-		single_channel = threshold_image(single_color_img)
-		cont, hierarchy = findContours(single_channel)
+		single_color_img = self.extract_single_color_range(image, hsv, lower, upper)
+		single_channel = self.threshold_image(single_color_img)
+		cont, hierarchy = self.findContours(single_channel)
 		
 		if DEBUG:
 			cv2.imshow('single_color_img', single_color_img)
@@ -215,7 +223,7 @@ class RecognizeFlask:
 				
 			cv2.imshow('contours',single_channel)
 
-		bricks = get_bricks(cont)
+		bricks = self.get_bricks(cont)
 		
 		return bricks
 
@@ -232,5 +240,5 @@ class RecognizeFlask:
 
 
 if __name__ == "__main__":
-	RecognizeFlask()
-
+		RecognizeFlask()
+		input("Success :-)")
