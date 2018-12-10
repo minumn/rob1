@@ -10,7 +10,7 @@ from geometry_msgs.msg import Vector3
 import rospy
 
 DEBUG = True
-DATAFROMWEBCAM = True
+DATAFROMWEBCAM = False
 
 # REF: Inspiration found on https://github.com/au-crustcrawler/au_opencv_example/blob/master/src/opencvexample.py?fbclid=IwAR0FTOImwGA_EJhDEodd2QmzwBPFp0cXghX7iKaL780cvCc5QA8qySCZg30
 
@@ -18,6 +18,7 @@ class RecognizeFlask:
 
 	def __init__(self):
 		self.brickCoordinates = list()
+		self.brickCoordinatesBad = list()
 		
 		imageRaw = self.getImageRaw(fromWebcam=DATAFROMWEBCAM)
 
@@ -33,20 +34,12 @@ class RecognizeFlask:
 		self.initColorMargins()
 		
 		color = "yellow"
-		bricks = self.findBricks(color)
 		
-		if DEBUG:
-			self.showBricks(bricks, color)
+		contours, hierarchy = self.findContours(image, hsv, color)
 
-			cv2.imshow('result',image)
-
-			# c = cv2.waitKey(5)
-			# cv2.destroyAllWindows()
-			# exit(0)
+		bricks = self.getBricksFromContours(contours)
 			
-		#cv2.imwrite('result.jpg',image)
-		
-		# self.publishResult()
+		cv2.imwrite('result.jpg',image)
 	
 	def  getImageRaw(self, fromWebcam = True):
 		if fromWebcam:
@@ -69,22 +62,6 @@ class RecognizeFlask:
 
 		self.lower_red = np.array([0,50,50])
 		self.upper_red = np.array([20,255,255])
-	
-	def findBricks(self, color = "yellow"):
-		color = color.lower()
-		image = self.image
-		hsv = self.hsv
-		
-		if color == "yellow":
-			return self.do_full(image, hsv, self.upper_yellow, self.lower_yellow)
-		elif color == "blue":
-			return self.do_full(image, hsv, self.upper_blue, self.lower_blue)
-		elif color == "green":
-			return self.do_full(image, hsv, self.upper_green, self.lower_green)
-		elif color == "red":
-			return self.do_full(image, hsv, self.upper_red, self.lower_red)
-		else:
-			raise Exception("Color '{}' is not supported".format(color))
 			
 	def showBricks(self, bricks, color = "yellow"):
 		color = color.lower()
@@ -134,7 +111,7 @@ class RecognizeFlask:
 			raise Exception("File not loaded correctly.")
 		return file
 
-	def get_bricks(self, contours):
+	def getBricksFromContours(self, contours):
 		"""
 		For each contour in contours
 			approximate the contours such that small variations are removed
@@ -155,15 +132,40 @@ class RecognizeFlask:
 				circle = cv2.circle(image, center, radius, (30,255,255), 2)
 				print("coordinate found: ", x, y)
 				self.brickCoordinates.append((x, y))
-				
+			else:
+				self.brickCoordinatesBad.append((x, y))
+			
+			if DEBUG:
+				self.showBricks(bricks, color)
+
+				cv2.imshow('result',image)
+
+				# c = cv2.waitKey(5)
+				# cv2.destroyAllWindows()
+				# exit(0)
+			
 			return self.brickCoordinates			
 
-	def extract_single_color_range(self, image, hsv, lower, upper):
+	def extract_single_color_range_helper(self, image, hsv, color):
+
+		if color == "yellow":
+			return self.extract_single_color_range(image, hsv, self.upper_yellow, self.lower_yellow)
+		elif color == "blue":
+			return self.extract_single_color_range(image, hsv, self.upper_blue, self.lower_blue)
+		elif color == "green":
+			return self.extract_single_color_range(image, hsv, self.upper_green, self.lower_green)
+		elif color == "red":
+			return self.extract_single_color_range(image, hsv, self.upper_red, self.lower_red)
+		else:
+			raise Exception("Color '{}' is not supported".format(color))
+	
+	def extract_single_color_range(self, image, hsv, upper, lower):
 		"""
 		Calculates a mask for which all pixels within the specified range is set to 1
 		the ands this mask with the provided image such that color information is
 		still present, but only for the specified range
 		"""
+		
 		mask = cv2.inRange(image, lower, upper)
 		res = cv2.bitwise_and(image,image, mask= mask)
 		cv2.imshow('res1',res)
@@ -190,55 +192,61 @@ class RecognizeFlask:
 		cv2.imshow('opened',opening)
 		return closing
 
-	def findContours(self, image):
+	def findContours(self, image, hsv, color):
 		"""
 		Extract the contours of the image by first converting it to grayscale and then
 		call findContours
 		"""
-		imgray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-		if DEBUG: 
-			cv2.imshow('gray_scale_contour',imgray)
-		im2, contours, hierarchy = cv2.findContours(imgray,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-
-		return contours, hierarchy
-
-	def do_full(self, image, hsv, upper, lower):
-		"""
-		Main methods for processing an image and detect rectangles in the given
-		hsv color range
-
-		set DEBUG to True in order to show the intermediate images
-		"""
-		single_color_img = self.extract_single_color_range(image, hsv, lower, upper)
-		single_channel = self.threshold_image(single_color_img)
-		cont, hierarchy = self.findContours(single_channel)
 		
-		if DEBUG:
+		single_color_img = self.extract_single_color_range_helper(image, hsv, color)
+		single_channel = self.threshold_image(single_color_img)
+		
+		imgray = cv2.cvtColor(single_channel,cv2.COLOR_BGR2GRAY)
+
+
+		im2, contours, hierarchy = cv2.findContours(imgray, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+		if DEBUG: 
+			cv2.imshow('gray_scale_contour', imgray)
+			
 			cv2.imshow('single_color_img', single_color_img)
 			
 			cv2.imshow('single_channel', single_channel)
 			
-			for i, cnt in enumerate(cont):
-				cv2.drawContours(single_channel,cont,i,(0,0,255),2)
+			for i, cnt in enumerate(contours):
+				cv2.drawContours(single_channel,cnt,i,(0,0,255),2)
 				
 			cv2.imshow('contours',single_channel)
-
-		bricks = self.get_bricks(cont)
+			
+		return contours, hierarchy
 		
-		return bricks
+	def getFlaskCoordinates(self):
+		return self.brickCoordinates
 
-	def publishResult(self):
-		(x, y) = self.brickCoordinates[1]
-		
-		data = Vector3(x, y, 30)
-		pub = rospy.Publisher('setRobotXYZ', Vector3, queue_size=0)
-		rospy.init_node('TalkerCameraCoordinates', anonymous=True)
-		rate = rospy.Rate(10) # 10hz
+	def getFlaskCoordinatesBad(self):
+		return self.brickCoordinatesBad
 
-		rospy.loginfo(data)
-		pub.publish(data)
+def publishResult(resultList):
+	(x, y) = resultList[1]
+	
+	data = Vector3(x, y, 30)
+	pub = rospy.Publisher('setRobotXYZ', Vector3, queue_size=0)
+	rospy.init_node('TalkerCameraCoordinates', anonymous=True)
+	rate = rospy.Rate(10) # 10hz
+
+	rospy.loginfo(data)
+	pub.publish(data)
 
 
 if __name__ == "__main__":
-		RecognizeFlask()
-		input("Success :-)")
+	recognizeFlask = RecognizeFlask()
+	flaskCoordinates = recognizeFlask.getFlaskCoordinates()
+	flaskCoordinatesBad = recognizeFlask.getFlaskCoordinatesBad()
+	print ""
+	print "Good spots:"
+	print(flaskCoordinates)
+	print("Bad spots: ")
+	print(flaskCoordinatesBad)
+	#publishResult(flaskCoordinates)
+		
+		
