@@ -70,9 +70,9 @@ def extract_single_color_range(image,hsv,lower,upper):
     the ands this mask with the provided image such that color information is
     still present, but only for the specified range
     """
-    mask = cv2.inRange(hsv, lower, upper)
+    mask = cv2.inRange(image, lower, upper)
     res = cv2.bitwise_and(image,image, mask= mask)
-    #cv2.imshow('res',res)
+    cv2.imshow('res1',res)
     return res
 
 def threshold_image(image,debug=False):
@@ -92,8 +92,8 @@ def threshold_image(image,debug=False):
     opening = cv2.morphologyEx(image, cv2.MORPH_OPEN,np.ones((5,5),np.uint8))
     closing = cv2.morphologyEx(opening, cv2.MORPH_CLOSE,np.ones((1,1),np.uint8))    
     
-    #cv2.imshow('closing', closing)
-    #cv2.imshow('opened',opening)
+    cv2.imshow('closing', closing)
+    cv2.imshow('opened',opening)
     return closing
 
 def contours(image,debug=False):
@@ -154,10 +154,11 @@ image = get_from_webcam()
 #cv2.imshow('raw',image)
 
 image = image[77:414, 32:630]
-#cv2.imshow('cropped', image)
+cv2.imshow('cropped', image)
 
 
 hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+cv2.imshow('hsv', hsv)
 
 lower_blue = np.array([100,50,50])
 upper_blue = np.array([130,255,255])
@@ -165,8 +166,11 @@ upper_blue = np.array([130,255,255])
 lower_green = np.array([35,50,50])
 upper_green = np.array([90,255,255])
 
-lower_yellow = np.array([20,50,50])
-upper_yellow = np.array([30,255,255])
+lower_yellow = np.array([5,175,175])
+upper_yellow = np.array([75,230,230])
+
+#lower_yellow = np.array([20,50,50])
+#upper_yellow = np.array([30,255,255])
 
 lower_red = np.array([0,50,50])
 upper_red = np.array([20,255,255])
@@ -184,11 +188,11 @@ show_bricks(image,yellow_bricks,(0,255,255))
 
 
 
-#cv2.imshow('result',image)
+cv2.imshow('result',image)
 cv2.imwrite('result.jpg',image)
 while True:
-    c = cv2.waitKey(5)
-    #if c != -1:
-    cv2.destroyAllWindows()
-    exit(0)
+	c = cv2.waitKey(5)
+	#if c != -1:
+	cv2.destroyAllWindows()
+	exit(0)
 
