@@ -67,6 +67,24 @@ def invkin(xyz):
     #Calculate q4
 	q4 = 0 # We don't consider rotation yet
   
+	limit_ = 1.5
+	if q1>limit_:
+		q1=limit_
+	elif q1 < -limit_
+		q1 = -limit_
+
+	limit_ = 1.8
+	if q2>limit_:
+		q2=limit_
+	elif q2 < -limit_
+		q2 = -limit_
+
+	limit_ = 1.8
+	if q3>limit_:
+		q3=limit_
+	elif q3 < -limit_
+		q3 = -limit_
+		
 	print('Leaving:' + str((q1,q2,q3,q4)))
 	return [q1,q2,q3,q4]
 	#return [0,0,0,0]

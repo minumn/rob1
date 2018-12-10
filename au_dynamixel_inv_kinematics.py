@@ -24,6 +24,8 @@ def invkin(xyz):
 
 	print("Invkin called with " + str(xyz))
 
+	elbovUP = True
+
 	d1 = 16.5; # cm (height of 2nd joint)
 	a1 = 0.0; # (distance along "y-axis" to 2nd joint)
 	a2 = 17.5; # (distance between 2nd and 3rd joints)

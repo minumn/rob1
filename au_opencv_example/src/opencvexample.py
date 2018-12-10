@@ -139,7 +139,7 @@ def talker():
     global x
     global y
     data = Vector3(x, y, 30)
-    pub = rospy.Publisher('center_xy', Vector3, queue_size=0)
+    pub = rospy.Publisher('setRobotXYZ', Vector3, queue_size=0)
     rospy.init_node('TalkerCameraCoordinates', anonymous=True)
     rate = rospy.Rate(10) # 10hz
     #while not rospy.is_shutdown():

@@ -28,18 +28,21 @@ def invkin(xyz):
 
 	print("Invkin called with " + str(xyz))
 
+	# Settings
 	elbovUP = True
+	limit_q3 = 1.8
+  	limit_q1 = 1.5
+	limit_q2 = 1.8
 
 	d1 = 16.6; # cm (height of 2nd joint)
 	a1 = 0.0; # (distance along "y-axis" to 2nd joint)
 	a2 = 17.2; # (distance between 2nd and 3rd joints)
 	d4 = 24.8; # (distance from 3rd joint to gripper center - all inclusive, ie. also 4th joint)
 
-	# Insert code here!!!
-	oc = xyz #[2, 2, 1]
-	xc = oc[0]
-	yc = oc[1]
-	zc = oc[2]
+	# Functionality
+	xc = xyz[0]
+	yc = xyz[1]
+	zc = xyz[2]
 
     #Calculate q1
 	q1 = atan2(yc, xc)
@@ -67,7 +70,22 @@ def invkin(xyz):
 
     #Calculate q4
 	q4 = 0 # We don't consider rotation yet
-  
+	
+	if q1>limit_q1:
+		q1=limit_q1
+	elif q1 < -limit_q1
+		q1 = -limit_q1
+
+	if q2>limit_q2:
+		q2=limit_q2
+	elif q2 < -limit_q2
+		q2 = -limit_q2
+
+	if q3>limit_q3:
+		q3=limit_q3
+	elif q3 < -limit_q3
+		q3 = -limit_q3
+		
 	print('Leaving:' + str((q1,q2,q3,q4)))
 	return [q1,q2,q3,q4]
 
@@ -84,8 +102,6 @@ class ActionExampleNode:
 				"joint4"
 				]
 		# the list of xyz points we want to plan
-		self.x_ = 24.5
-		self.y_ = -16.7
 		# self.setCoordinates(24.5)
 
 		
@@ -105,19 +121,15 @@ class ActionExampleNode:
 
 	def setCoordinates(self, data):
 		xyz_positions = [
-		[data.x, data.y, 30]
+		[data.x, data.y, data.z]
 		]
 		
-		#rospy.Publisher("/gripper/command", Float64).publish(0.5)
-		#x = rospy.Subscriber("center_x", Float64, callback_x)
-		# initial duration
 		dur = rospy.Duration(1)
 
 		# construct a list of joint positions by calling invkin for each xyz point
 		self.joint_positions = []
 		for p in xyz_positions:
 			jtp = JointTrajectoryPoint(positions=invkin(p),velocities=[0.5]*self.N_JOINTS ,time_from_start=dur)
-			#jtp = JointTrajectoryPoint(positions=[0,0,0,0],velocities=[0.5]*self.N_JOINTS ,time_from_start=dur)
 			dur += rospy.Duration(2)
 			self.joint_positions.append(jtp)
 
@@ -125,8 +137,8 @@ class ActionExampleNode:
 		self.goal = FollowJointTrajectoryGoal( trajectory=self.jt, goal_time_tolerance=dur+rospy.Duration(2) )
 		
 
-def callback_xy(data):
-	rospy.loginfo("XY received here : %f")
+def callback_xyz(data):
+	rospy.loginfo("XYZ received here : {<}")
 	
 	global node
 	node.setCoordinates(data)
@@ -138,7 +150,7 @@ def callback_xy(data):
 if __name__ == "__main__":
 	global node
 	rospy.init_node('listener_robot_mover', anonymous=True)
-	rospy.Subscriber("center_xy", Vector3, callback_xy)
+	rospy.Subscriber("setRobotXYZ", Vector3, callback_xyz)
 	node= ActionExampleNode("/arm_controller/follow_joint_trajectory")
 	rospy.spin()
 	
