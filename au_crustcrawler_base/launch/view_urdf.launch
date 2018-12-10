@@ -1,0 +1,26 @@
+
+<launch>
+	<arg name="simulate" default="true" />
+	<!-- Load the urdf description of the Robot to the parameter server -->
+	<param name="robot_description"
+		command="cat $(find au_crustcrawler_base)/conf/au_crustcrawler_ax12.urdf" />
+
+	<!-- Start a node which publishes the state of the robot joints to TF based on the states read from /arm_controller/joint_state -->
+	<node pkg="robot_state_publisher" type="robot_state_publisher"
+		name="rob_st_pub" output="screen">
+		<remap from="joint_states" to="/joint_states" />
+		<remap from="robot_description" to="/robot_description" />
+	</node>
+	
+	<!-- Start a fake robot which publishes joint position based on input from a gui -->
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" if="$(arg simulate)">
+		type="joint_state_publisher">
+		<param name="use_gui" value="true" />
+		<remap from="joint_states" to="/joint_states" />
+	</node>
+
+	<!-- Start Rviz for viewing the urdf -->
+	<node pkg="rviz" name="rvizz" type="rviz" args="-d $(find au_crustcrawler_base)/conf/view_urdf.rviz" />
+	
+	
+</launch>

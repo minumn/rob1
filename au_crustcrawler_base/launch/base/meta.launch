@@ -1,0 +1,18 @@
+<launch>
+
+
+    <!-- Load controller configuration to parameter server -->
+    <rosparam file="$(find au_crustcrawler_base)/conf/main_control.yaml" command="load"/>
+
+    <node name="dynamixel_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
+          args="--manager=dxl_manager
+                --port=arm_port
+                --type=meta
+				arm_controller
+				joint1
+				joint2
+				joint3
+        joint4
+				"
+          output="screen"/>
+</launch>
