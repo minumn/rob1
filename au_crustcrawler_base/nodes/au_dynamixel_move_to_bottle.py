@@ -14,7 +14,7 @@ from math import cos, sin, atan2, sqrt, pi
 from std_msgs.msg    import Float64
 from geometry_msgs.msg import Vector3
 
-
+# REF: Inspiration found in code example given in class
 
 def invkin(xyz):
 	"""
@@ -30,9 +30,10 @@ def invkin(xyz):
 
 	# Settings
 	elbovUP = True
-	limit_q3 = 1.8
+	
   	limit_q1 = 1.5
 	limit_q2 = 1.8
+	limit_q3 = 1.8
 
 	d1 = 16.6; # cm (height of 2nd joint)
 	a1 = 0.0; # (distance along "y-axis" to 2nd joint)
@@ -92,7 +93,7 @@ def invkin(xyz):
 class ActionExampleNode:
 
 	N_JOINTS = 4
-	def __init__(self,server_name):
+	def __init__(self, server_name):
 		self.client = actionlib.SimpleActionClient(server_name, FollowJointTrajectoryAction)
 
 		self.joint_positions = []
@@ -101,10 +102,6 @@ class ActionExampleNode:
 				"joint3",
 				"joint4"
 				]
-		# the list of xyz points we want to plan
-		# self.setCoordinates(24.5)
-
-		
 
 	def send_command(self):
 		self.client.wait_for_server()
@@ -112,16 +109,15 @@ class ActionExampleNode:
 		print self.goal
 		print "------------------------------ \n"
 		self.client.send_goal(self.goal)
-		
 
 		print "------ wait_for_result ------- \n"
 		self.client.wait_for_result()
 		print self.client.get_result()
 		print "------------------------------ \n"
 
-	def setCoordinates(self, data):
+	def setCoordinates(self, dataVector3):
 		xyz_positions = [
-		[data.x, data.y, data.z]
+		[dataVector3.x, dataVector3.y, dataVector3.z]
 		]
 		
 		dur = rospy.Duration(1)
@@ -137,15 +133,13 @@ class ActionExampleNode:
 		self.goal = FollowJointTrajectoryGoal( trajectory=self.jt, goal_time_tolerance=dur+rospy.Duration(2) )
 		
 
-def callback_xyz(data):
+def callback_xyz(dataVector3):
 	rospy.loginfo("XYZ received here : {<}")
 	
 	global node
-	node.setCoordinates(data)
+	node.setCoordinates(dataVector3)
 	node.send_command()
 	rospy.spin()
-    
-        
 
 if __name__ == "__main__":
 	global node
