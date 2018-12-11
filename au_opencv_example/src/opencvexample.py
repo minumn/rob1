@@ -11,6 +11,7 @@ import rospy
 
 
 
+
 def get_from_webcam():
     """
     Fetches an image from the webcam
