@@ -74,17 +74,17 @@ def invkin(xyz):
 	
 	if q1>limit_q1:
 		q1=limit_q1
-	elif q1 < -limit_q1
+	elif q1 < -limit_q1:
 		q1 = -limit_q1
 
 	if q2>limit_q2:
 		q2=limit_q2
-	elif q2 < -limit_q2
+	elif q2 < -limit_q2:
 		q2 = -limit_q2
 
 	if q3>limit_q3:
 		q3=limit_q3
-	elif q3 < -limit_q3
+	elif q3 < -limit_q3:
 		q3 = -limit_q3
 		
 	print('Leaving:' + str((q1,q2,q3,q4)))
@@ -125,7 +125,7 @@ class ActionExampleNode:
 		# construct a list of joint positions by calling invkin for each xyz point
 		self.joint_positions = []
 		for p in xyz_positions:
-			jtp = JointTrajectoryPoint(positions=invkin(p),velocities=[0.5]*self.N_JOINTS ,time_from_start=dur)
+			jtp = JointTrajectoryPoint(positions=invkin(p),velocities=[0.2]*self.N_JOINTS ,time_from_start=dur)
 			dur += rospy.Duration(2)
 			self.joint_positions.append(jtp)
 
@@ -139,13 +139,14 @@ def callback_xyz(dataVector3):
 	global node
 	node.setCoordinates(dataVector3)
 	node.send_command()
-	rospy.spin()
+	
 
 if __name__ == "__main__":
 	global node
 	rospy.init_node('listener_robot_mover', anonymous=True)
-	rospy.Subscriber("setRobotXYZ", Vector3, callback_xyz)
+	rospy.Subscriber("setRobotXYZ", Vector3, callback_xyz, queue_size = 1, buff_size = 5)
 	node= ActionExampleNode("/arm_controller/follow_joint_trajectory")
+	#rospy.Subscriber("setRobotXYZ", Vector3, callback_xyz)
 	rospy.spin()
 	
 	
