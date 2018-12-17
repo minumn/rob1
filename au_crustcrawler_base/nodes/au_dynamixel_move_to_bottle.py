@@ -38,7 +38,7 @@ def invkin(xyz):
 	d1 = 16.6; # cm (height of 2nd joint)
 	a1 = 0.0; # (distance along "y-axis" to 2nd joint)
 	a2 = 17.2; # (distance between 2nd and 3rd joints)
-	d4 = 24.8; # (distance from 3rd joint to gripper center - all inclusive, ie. also 4th joint)
+	d4 = 26.8; # (distance from 3rd joint to gripper center - all inclusive, ie. also 4th joint)
 
 	# Functionality
 	xc = xyz[0]
