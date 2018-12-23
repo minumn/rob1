@@ -50,9 +50,11 @@ def invkin(xyz):
     
 
     #Calculate q2 and q3
-	
+	# Translate to new x, y axis
 	x = sqrt(yc**2 + xc**2)
 	y = zc-d1
+	
+	# Set "new" arms.
 	a1=a2
 	a2=d4	
 	
@@ -72,6 +74,7 @@ def invkin(xyz):
     #Calculate q4
 	q4 = 0 # We don't consider rotation yet
 	
+    # We do not wish the robot to move outside of safe limits.
 	if q1>limit_q1:
 		q1=limit_q1
 	elif q1 < -limit_q1:
@@ -90,7 +93,7 @@ def invkin(xyz):
 	print('Leaving:' + str((q1,q2,q3,q4)))
 	return [q1,q2,q3,q4]
 
-class ActionExampleNode:
+class RobotControl:
 
 	N_JOINTS = 4
 	def __init__(self, server_name):
@@ -116,25 +119,22 @@ class ActionExampleNode:
 		print "------------------------------ \n"
 
 	def setCoordinates(self, dataVector3):
-		xyz_positions = [
-		[dataVector3.x, dataVector3.y, dataVector3.z]
-		]
+		xyz_positions = [dataVector3.x, dataVector3.y, dataVector3.z]
 		
 		dur = rospy.Duration(1)
 
 		# construct a list of joint positions by calling invkin for each xyz point
 		self.joint_positions = []
-		for p in xyz_positions:
-			jtp = JointTrajectoryPoint(positions=invkin(p),velocities=[0.2]*self.N_JOINTS ,time_from_start=dur)
-			dur += rospy.Duration(2)
-			self.joint_positions.append(jtp)
+		jtp = JointTrajectoryPoint(positions=invkin(xyz_positions),velocities=[0.2]*self.N_JOINTS ,time_from_start=dur)
+		dur += rospy.Duration(2)
+		self.joint_positions.append(jtp)
 
 		self.jt = JointTrajectory(joint_names=self.names, points=self.joint_positions)
 		self.goal = FollowJointTrajectoryGoal( trajectory=self.jt, goal_time_tolerance=dur+rospy.Duration(2) )
 		
 
 def callback_xyz(dataVector3):
-	rospy.loginfo("XYZ received here : {<}")
+	rospy.loginfo("XYZ received here : {}".format(dataVector3))
 	
 	global node
 	node.setCoordinates(dataVector3)
@@ -145,7 +145,7 @@ if __name__ == "__main__":
 	global node
 	rospy.init_node('listener_robot_mover', anonymous=True)
 	rospy.Subscriber("setRobotXYZ", Vector3, callback_xyz, queue_size = 1, buff_size = 5)
-	node= ActionExampleNode("/arm_controller/follow_joint_trajectory")
+	node= RobotControl("/arm_controller/follow_joint_trajectory")
 	#rospy.Subscriber("setRobotXYZ", Vector3, callback_xyz)
 	rospy.spin()
 	
